@@ -1,6 +1,7 @@
-const {app, BrowserWindow, Menu, ipcMain, dialog} = require("electron")
+const {app, BrowserWindow, Menu, ipcMain, dialog,autoUpdater} = require("electron")
 const path = require("path")
 const Store = require('electron-store')
+// const {autoUpdater} = require("electron-updater")
 const QiniuManager = require("./src/utils/QiniuManager")
 const menuTemplate = require("./src/menuTemplate")
 const AppWindow = require("./src/AppWindow")
@@ -9,6 +10,7 @@ const fileStore = new Store({name: "Files Data"})
 let mainWindow = null
 let settingsWindow = null
 console.log(process.env.NODE_ENV)
+
 function getEvn() {
   console.log(process.env.NODE_ENV)
 
@@ -27,7 +29,7 @@ function createWindow() {
     width: 1024,
     height: 680,
   }
-  const urlLocation = getEvn() === "development" ? "http://localhost:3000" : `file://${path.join(__dirname,"./index.html")}`
+  const urlLocation = getEvn() === "development" ? "http://localhost:3000" : `file://${path.join(__dirname, "./index.html")}`
   // const urlLocation = `file://${path.join(__dirname,"./build/index.html")}`
   mainWindow = new AppWindow(mainWindowConfig, urlLocation)
   if (getEvn() === "development") mainWindow.webContents.openDevTools()
@@ -37,8 +39,54 @@ function createWindow() {
 }
 
 app.on("ready", () => {
-  createWindow()
+  // if (getEvn() === "development") {
+  //   autoUpdater.updateConfigPath = path.join(__dirname, "dev-app-update.yml")
+  // }
+  autoUpdater.autoDownload = false // 不要自动下载
+  // autoUpdater.checkForUpdatesAndNotify() // 这个方法只能在打包程序中应用
+  autoUpdater.checkForUpdates()
+  autoUpdater.on("error", (error) => {
+    console.log(111)
+    dialog.showErrorBox("Error:", error === null ? "unknown" : (error.stack || error).toString())
+  })
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for update...');
+  })
+  autoUpdater.on('update-available', () => { // 有更新了进行
+    dialog.showMessageBox({
+      type: 'info',
+      title: '应用有新的版本',
+      message: '发现新版本，是否现在更新?',
+      buttons: ['是', '否']
+    }).then((buttonIndex) => {
+      if (buttonIndex === 0) {
+        autoUpdater.downloadUpdate()
+      }
+    })
+  })
+  autoUpdater.on('update-not-available', () => { // 没有可以更新的版本
+    dialog.showMessageBox({
+      title: '没有新版本',
+      message: '当前已经是最新版本'
+    })
+  })
+  autoUpdater.on('download-progress', (progressObj) => {
+    let log_message = "Download speed: " + progressObj.bytesPerSecond;
+    log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+    log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    console.log(log_message)
+  })
 
+  autoUpdater.on('update-downloaded', () => {
+    dialog.showMessageBox({
+      title: '安装更新',
+      message: '更新下载完毕，应用将重启并进行安装'
+    }).then(()=>{
+      setImmediate(() => autoUpdater.quitAndInstall())
+    })
+  })
+
+  createWindow()
   // 菜单
   let menu = Menu.buildFromTemplate(menuTemplate)
   Menu.setApplicationMenu(menu)
@@ -97,7 +145,7 @@ app.on("ready", () => {
         manager.downloadFile(key, path).then(() => {
           console.log("resolve")
           event.reply("file-downloaded", {status: "download-success", id})
-        }).catch(()=>{
+        }).catch(() => {
           console.log("reject")
           event.reply("file-downloaded", {status: "no-file", id})
         })
@@ -106,15 +154,15 @@ app.on("ready", () => {
       }
     }).catch(err => {
       console.log(err)
-      event.reply("file-downloaded", {status: "no-file",id})
+      event.reply("file-downloaded", {status: "no-file", id})
     })
   })
   // 全部同步到云端
-  ipcMain.on("upload-all-to-qiniu",()=>{
-    mainWindow.webContents.send("loading-status",true)
-    setTimeout(()=>{
-      mainWindow.webContents.send("loading-status",false)
-    },3000)
+  ipcMain.on("upload-all-to-qiniu", () => {
+    mainWindow.webContents.send("loading-status", true)
+    setTimeout(() => {
+      mainWindow.webContents.send("loading-status", false)
+    }, 3000)
   })
 })
 
