@@ -1,0 +1,137 @@
+{
+  "name": "cloud-doc",
+  "version": "0.1.0",
+  "description": "Online markdown",
+  "main": "main.js",
+  "private": true,
+  "homepage": "./",
+  "author": {
+    "name": "dongrudong",
+    "email": "dongrudong@bixin.cn"
+  },
+  "dependencies": {
+    "bootstrap": "^5.0.2",
+    "electron-store": "^4.0.0"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.35",
+    "@fortawesome/free-brands-svg-icons": "^5.15.3",
+    "@fortawesome/free-solid-svg-icons": "^5.15.3",
+    "@fortawesome/react-fontawesome": "^0.1.14",
+    "qiniu": "^7.3.3",
+    "axios": "^0.21.1",
+    "classnames": "^2.3.1",
+    "concurrently": "^6.2.0",
+    "cra-template": "1.1.2",
+    "cross-env": "^7.0.3",
+    "easymde": "^2.15.0",
+    "electron": "^9.4.4",
+    "electron-builder": "^22.11.7",
+    "electron-is-dev": "^2.0.0",
+    "node-sass": "^6.0.1",
+    "nodemon": "^2.0.7",
+    "prop-types": "^15.7.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "react-simplemde-editor": "^5.0.1",
+    "uuid": "^8.3.2",
+    "wait-on": "^5.3.0",
+    "webpack-cli": "^4.7.2"
+  },
+  "scripts": {
+    "dev:electron": "NODE_ENV=development electron .",
+    "onlyEle": "NODE_ENV=development nodemon --watch main.js --watch src/menuTemplate.js --exec \"electron .\"",
+    "start": "cross-env BROWSER=none react-scripts start",
+    "dev": "concurrently \"wait-on http://localhost:3000 && npm run dev:electron\" \"npm run start\"",
+    "build": "react-scripts build",
+    "build:main": "webpack",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "pack": "electron-builder --dir",
+    "prepack": "npm run build && npm run build:main",
+    "dist": "electron-builder",
+    "predist": "npm run build && npm run build:main"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "publish": ["github"],
+  "build": {
+    "appId": "cloudDoc",
+    "productName": "文档",
+    "copyright": "Copyright © 2019 ${author}",
+    "extends": null,
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "settings/**/*",
+      "package.json",
+      "main.js",
+      "./src/AppWindow.js",
+      "./src/menuTemplate.js",
+      "./src/utils/QiniuManager.js"
+    ],
+    "extraMetadata": {
+      "main": "./build/main.js"
+    },
+    "directories": {
+      "buildResources": "assets"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "background": "assets/appdmg.png",
+      "icon": "assets/icon.icns",
+      "iconSize": 100,
+      "contents": [
+        {
+          "x": 380,
+          "y": 280,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 110,
+          "y": 280,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 500,
+        "height": 500
+      }
+    },
+    "win": {
+      "target": [
+        "msi",
+        "nsis"
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-Web-Setup-${version}.${ext}",
+      "publisherName": "Viking Zhang"
+    },
+    "nsis": {
+      "allowToChangeInstallationDirectory": true,
+      "oneClick": false,
+      "perMachine": false
+    }
+  }
+}
